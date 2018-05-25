@@ -56,28 +56,10 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   address.innerHTML = restaurant.address;
 
   //build reactive picture element
-  let imageName = DBHelper.imageUrlForRestaurant(restaurant);
   let picture = document.getElementById('restaurant-img');
   picture.className = 'restaurant-img';
   picture.setAttribute('alt', restaurant.name);
-  
-  let lg = document.createElement('source');
-  lg.setAttribute('srcset', imageName);
-  lg.setAttribute('media', '(min-width: 601px)');
-  picture.append(lg);
-
-  let mdName = imageName.split('.jpg')[0] + '_md.jpg';
-  let md = document.createElement('source');
-  md.setAttribute('srcset', mdName);
-  md.setAttribute('media', '(min-width: 401px)');
-  picture.append(md);
-
-  let smName = imageName.split('.jpg')[0] + '_sm.jpg';
-  let img = document.createElement('img');
-  img.className = 'restaurant-img';
-  img.src = smName;
-  img.setAttribute('alt', restaurant.name);
-  picture.append(img);
+  Utils.assemblePictureHtml(picture, restaurant);
 
   const cuisine = document.getElementById('restaurant-cuisine');
   cuisine.innerHTML = restaurant.cuisine_type;
