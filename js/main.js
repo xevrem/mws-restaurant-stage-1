@@ -132,16 +132,55 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
   addMarkersToMap();
 }
 
+/*
+  Creates a picture element with the following structure
+  <picture alt=''>
+    <source srcset="/img/1.jpg" media="(min-width: 601px)">
+    <source srcset="/img/1_md.jpg" media="(min-width: 401px)">
+    <img src="/img/1_sm.jpg" alt="restaurant">
+  </picture>
+  */
+ const createPictureHtml = (restaurant) =>{
+  let imageName = DBHelper.imageUrlForRestaurant(restaurant);
+  let picture = document.createElement('picture');
+  picture.className = 'restaurant-img';
+  picture.setAttribute('alt', restaurant.name);
+  
+  let lg = document.createElement('source');
+  lg.setAttribute('srcset', imageName);
+  lg.setAttribute('media', '(min-width: 601px)');
+  picture.append(lg);
+
+  let mdName = imageName.split('.jpg')[0] + '_md.jpg';
+  let md = document.createElement('source');
+  md.setAttribute('srcset', mdName);
+  md.setAttribute('media', '(min-width: 401px)');
+  picture.append(md);
+
+  let smName = imageName.split('.jpg')[0] + '_sm.jpg';
+  let img = document.createElement('img');
+  img.className = 'restaurant-img';
+  img.src = smName;
+  img.setAttribute('alt', restaurant.name);
+  picture.append(img);
+
+  return picture;
+}
+
 /**
  * Create restaurant HTML.
  */
 createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
 
-  const image = document.createElement('img');
-  image.className = 'restaurant-img';
-  image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  li.append(image);
+  // const image = document.createElement('img');
+  // image.className = 'restaurant-img';
+  // image.src = DBHelper.imageUrlForRestaurant(restaurant);
+  // li.append(image);
+  
+  //construct picture element using restaurant info
+  const picture = createPictureHtml(restaurant);
+  li.append(picture);
 
   const name = document.createElement('h1');
   name.innerHTML = restaurant.name;
