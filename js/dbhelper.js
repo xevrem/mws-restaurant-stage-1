@@ -9,7 +9,7 @@ class DBHelper {
    */
   static get DATABASE_URL() {
     //address & port information is not required for same-site locally hosted json data
-    //this fixes mobile and port testing/hosting issues
+    //this fixes mobile testing and non-8000 port hosting issues
     //const port = 8000 // Change this to your server port
     //return `http://localhost:${port}/data/restaurants.json`;
     return `/data/restaurants.json`;
