@@ -8,10 +8,11 @@ class DBHelper {
    * Change this to restaurants.json file location on your server.
    */
   static get DATABASE_URL() {
-    const port = 8000 // Change this to your server port
-    //URL for testing mobile divices:
-    //return `http://192.168.1.135:${port}/data/restaurants.json`;
-    return `http://localhost:${port}/data/restaurants.json`;
+    //address & port information is not required for same-site locally hosted json data
+    //this fixes mobile and port testing/hosting issues
+    //const port = 8000 // Change this to your server port
+    //return `http://localhost:${port}/data/restaurants.json`;
+    return `/data/restaurants.json`;
   }
 
   /**
