@@ -12,6 +12,56 @@ document.addEventListener('DOMContentLoaded', (event) => {
   fetchCuisines();
 });
 
+let reloading = false;
+
+window.addEventListener('load', () => {
+  if(!navigator.serviceWorker) return;
+
+  navigator.serviceWorker.register('/service_worker.js').then(registration=>{
+    // is this a service worker that is waiting to take over?
+    if(registration.waiting){
+      updateReady(registration.waiting);
+      return;
+    }
+
+    //is this a service worker that is installing?
+    if(registration.installing){
+      trackInstalling(registration.installing);
+      return;
+    }
+
+    //has a new service worker appeared?
+    registration.addEventListener('updatefound', () => {
+      trackInstalling(registration.installing);
+    });
+  });
+
+  //if the current service worker has changed, reload this page
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    console.log('reloading...');
+    window.location.reload();
+    reloading = true;
+  });
+})
+
+//let user know service worker can update
+updateReady = (worker) => {
+  console.log('updateReady called...');
+  worker.postMessage({action: 'SKIP_WAITING'})
+}
+
+//create an state change tracker for this service worker
+trackInstalling = (worker) => {
+  console.log('trackInstalling called...');
+  //if this service worker finished installing, tell it to take over.
+  worker.addEventListener('statechange', ()=>{
+    if (worker.state === 'installed') {
+      updateReady(worker);
+    }
+  });
+}
+
 /**
  * Fetch all neighborhoods and set their HTML.
  */
