@@ -65,11 +65,13 @@ self.addEventListener('activate', event => {
   //TODO: perform any one-time cleanup here...
 });
 
-//attempts a network fetch and caches the response
-const revalidate_fetch = (url) => {
-  fetch(url).then(response => {
-    caches.open(CACHE_NAME).then(cache => {
-      cache.put(url, response.clone());
+//attempts a network fetch (without browser cache) and then caches the response
+self.revalidate_fetch = (url) => {
+  return fetch(url, {cache: 'no-cache'}).then(response => {
+    return caches.open(CACHE_NAME).then(cache => {
+      return cache.put(url, response.clone()).then(() => {
+        return response;
+      });
     });
   });
 } 
@@ -87,27 +89,45 @@ self.addEventListener('fetch', event => {
   if(request_url.origin === location.origin){
     //if request is for 'root' page, serve the index
     if (request_url.pathname === '/') {
-      event.respondWith(caches.match('index.html'));
-      
-      //ensure sw left alive long enough to re-cache
-      event.waitUntil(revalidate_fetch('index.html'));
+      event.respondWith(caches.open(CACHE_NAME).then(cache => {
+        return cache.match('index.html').then(response => {
+          //if valid response, use it, but revalidate too
+          if(response){
+            //ensure sw left alive long enough to re-cache
+            event.waitUntil(revalidate_fetch('index.html'));
+            return response;
+          }
+          //do a fetch & cache
+          return revalidate_fetch('index.html');
+        });
+      }));
       return;
     }
 
     //serve local resources with normalized URL
     event.respondWith(caches.match(request_url).then(response => {
-      //ensure sw left alive long enough to re-cache
-      event.waitUntil(revalidate_fetch(request_url));
-      return response || fetch(request_url);
+      //if valid response, use it, but revalidate too
+      if(response){
+        //ensure sw left alive long enough to re-cache
+        event.waitUntil(revalidate_fetch(request_url));
+        return response;
+      }
+      //do a fetch & cache
+      return revalidate_fetch(request_url);
     }));
     return;
   }
 
   //for network fetches
   event.respondWith(caches.match(event.request).then(response => {
-    //ensure sw left alive long enough to re-cache
-    event.waitUntil(revalidate_fetch(event.request));
-    return response || fetch(event.request);
+    //if valid response, use it, but revalidate too
+    if(response){
+      //ensure sw left alive long enough to re-cache
+      event.waitUntil(revalidate_fetch(event.request));
+      return response;
+    }
+    //do a fetch & cache
+    return revalidate_fetch(event.request);
   }));
 });
 
