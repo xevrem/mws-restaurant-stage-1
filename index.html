@@ -12,18 +12,18 @@
 
 <body>
   <header>
-    <nav>
-      <h1><a href="/">Restaurant Reviews</a></h1>
-    </nav>
+    <h1><a href="/">Restaurant Reviews</a></h1>
   </header>
 
   <main id="maincontent">
-    <section id="map-container">
-      <div id="map"></div>
+    <section id="map-container" aria-label="Restaurant Map">
+      <p style="display: none;" id="maplabel">Google Maps</p>
+      <p id="mapinfo" style="display: none;">A Map of New York.</p>
+      <div id="map" role="application" aria-describedby="mapinfo" aria-labelledby="maplabel"></div>
     </section>
-    <section>
+    <section aria-label="Restaruant List">
       <div class="filter-options">
-        <h2>Filter Results</h2>
+        <h2 tabindex="0">Filter Results</h2>
         <label>
           <select id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()">
             <option value="all">All Neighborhoods</option>
@@ -47,7 +47,7 @@
   <script async defer src="https://maps.googleapis.com/maps/api/js?libraries=places&callback=initMap"></script>
 
 
-  <footer id="footer">
+  <footer id="footer" tabindex="0">
     Copyright (c) 2017 <a href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
   </footer>
 

@@ -131,6 +131,7 @@ window.initMap = () => {
     scrollwheel: false
   });
   updateRestaurants();
+  google.maps.event.addListenerOnce(self.map, 'idle', Utils.fixIframe);
 }
 
 /**
@@ -188,20 +189,16 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
 createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
   li.className = 'list-item';
-
-  // const image = document.createElement('img');
-  // image.className = 'restaurant-img';
-  // image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  // li.append(image);
+  li.tabIndex = "0";
   
   //construct picture element using restaurant info
   let picture = document.createElement('picture');
   picture.className = 'restaurant-img';
-  picture.setAttribute('alt', restaurant.name);
+  picture.setAttribute('alt', restaurant.alt);
   Utils.assemblePictureHtml(picture, restaurant);
   li.append(picture);
 
-  const name = document.createElement('h1');
+  const name = document.createElement('h2');
   name.innerHTML = restaurant.name;
   li.append(name);
 

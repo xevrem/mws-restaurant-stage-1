@@ -26,9 +26,18 @@ class Utils{
     let img = document.createElement('img');
     img.className = 'restaurant-img';
     img.src = smName;
-    img.setAttribute('alt', restaurant.name);
+    img.setAttribute('alt', restaurant.alt);
     picture.append(img);
 
     return picture;
+  }
+
+  /*
+  * Fixes broken google maps iframe titles
+  */
+  static fixIframe(){
+    const iframe = document.getElementsByTagName("iframe")[0];
+    console.log(iframe);
+    iframe.setAttribute("title", "Map of New York Restaurants");
   }
 }
