@@ -43,7 +43,7 @@ window.addEventListener('load', () => {
     window.location.reload();
     reloading = true;
   });
-})
+});
 
 //let user know service worker can update
 updateReady = (worker) => {

@@ -90,14 +90,14 @@ self.addEventListener('fetch', event => {
       event.respondWith(caches.match('index.html'));
       
       //ensure sw left alive long enough to re-cache
-      event.waitUntil(revalidate_fetch('index.html', event));
+      event.waitUntil(revalidate_fetch('index.html'));
       return;
     }
 
     //serve local resources with normalized URL
     event.respondWith(caches.match(request_url).then(response => {
       //ensure sw left alive long enough to re-cache
-      event.waitUntil(revalidate_fetch(request_url, event));
+      event.waitUntil(revalidate_fetch(request_url));
       return response || fetch(request_url);
     }));
     return;
@@ -106,7 +106,7 @@ self.addEventListener('fetch', event => {
   //for network fetches
   event.respondWith(caches.match(event.request).then(response => {
     //ensure sw left alive long enough to re-cache
-    event.waitUntil(revalidate_fetch(event.request, event));
+    event.waitUntil(revalidate_fetch(event.request));
     return response || fetch(event.request);
   }));
 });
