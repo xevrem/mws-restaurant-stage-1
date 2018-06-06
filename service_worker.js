@@ -2,6 +2,8 @@ const CACHE_NAME = 'mws-restaurant-v1'
 
 const RESOURCES_TO_PRECACHE = [
   'index.html',
+  'favicon.ico',
+  'manifest.json',
   'restaurant.html',
   'css/styles.css',
   'data/restaurants.json',
@@ -61,7 +63,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   console.log('service_worker is now active...');
   clients.claim();
-  
+
   //TODO: perform any one-time cleanup here...
 });
 
@@ -74,7 +76,7 @@ self.revalidate_fetch = (url) => {
       });
     });
   });
-} 
+}
 
 //intercede any fetches and serve from cache in a stale-while-revalidate manner
 self.addEventListener('fetch', event => {
@@ -84,7 +86,7 @@ self.addEventListener('fetch', event => {
   //normalize the url for local fetches
   let request_url = new URL(event.request.url);
   request_url.search = '';
-    
+
   //if requesting from the origin, use request_url
   if(request_url.origin === location.origin){
     //if request is for 'root' page, serve the index

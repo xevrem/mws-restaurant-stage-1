@@ -1,3 +1,4 @@
+/* global DBHelper */
 
 class Utils{
   /*
@@ -10,7 +11,7 @@ class Utils{
   */
   static assemblePictureHtml(picture, restaurant){
     let imageName = DBHelper.imageUrlForRestaurant(restaurant);
-    
+
     let lg = document.createElement('source');
     lg.setAttribute('srcset', imageName);
     lg.setAttribute('media', '(min-width: 601px)');
@@ -36,8 +37,8 @@ class Utils{
   * Fixes broken google maps iframe titles
   */
   static fixIframe(){
-    const iframe = document.getElementsByTagName("iframe")[0];
-    console.log(iframe);
-    iframe.setAttribute("title", "Map of New York Restaurants");
+    const iframe = document.getElementsByTagName('iframe')[0];
+    //console.log(iframe);
+    iframe.setAttribute('title', 'Map of New York Restaurants');
   }
 }

@@ -18,7 +18,7 @@ class DBHelper {
   /**
    * Fetch all restaurants.
    */
-  static fetchRestaurants(callback) {
+  static old_fetchRestaurants(callback) {
     let xhr = new XMLHttpRequest();
     xhr.open('GET', DBHelper.DATABASE_URL);
     xhr.onload = () => {
@@ -32,6 +32,22 @@ class DBHelper {
       }
     };
     xhr.send();
+  }
+
+  /**
+   * [fetchRestaurants fetches the latest list of restaurants in json form]
+   * @param  {Function} callback [callback accepting an error status and restaurant data]
+   * @return {[undefined]}       [no return]
+   */
+  static fetchRestaurants(callback){
+    fetch(DBHelper.DATABASE_URL).then(response => {
+      response.json().then(data => {
+        callback(null, data.restaurants);
+      });
+    })
+    .catch(error => {
+      callback(error, null);
+    });
   }
 
   /**

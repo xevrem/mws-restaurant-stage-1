@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="150" height="150" xmlns="http://www.w3.org/2000/svg" id="Smil-ee">
+  <circle cx="75" cy="75" r="65" stroke-width="10" stroke="#000000" fill="#000000" fill-opacity="0"/>
+  <!--circle cx="75" cy="75" r="60" fill="#ffffff" fill-opacity="0"/-->
+  <circle cx="50" cy="50" r="10" fill="#000000"/>
+  <circle cx="100" cy="50" r="10" fill="#000000"/>
+  <path d="M39 102 c-11 -15 -11 -16 1 -5 8 6 23 12 35 12 12 0 27 -6 35 -12 12 -11 12 -10 1 5 -7 9 -24 17 -36 17 -12 0 -29 -8 -36 -17z"/>
+<script xmlns="" data="0.7600671871583696"/><script xmlns=""/></svg>
