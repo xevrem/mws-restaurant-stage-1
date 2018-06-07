@@ -60,7 +60,7 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   //build reactive picture element
   let picture = document.getElementById('restaurant-img');
   picture.className = 'restaurant-img';
-  picture.setAttribute('alt', restaurant.alt);
+  picture.setAttribute('alt', restaurant.name);
   Utils.assemblePictureHtml(picture, restaurant);
 
   const cuisine = document.getElementById('restaurant-cuisine');

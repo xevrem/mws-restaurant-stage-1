@@ -14,7 +14,8 @@ class DBHelper { //eslint-disable-line
     //this fixes mobile testing and non-8000 port hosting issues
     //const port = 8000 // Change this to your server port
     //return `http://localhost:${port}/data/restaurants.json`;
-    return '/data/restaurants.json';
+    //return '/data/restaurants.json';
+    return 'http://localhost:1337/restaurants';
   }
 
   static open_db(callback){
@@ -34,7 +35,7 @@ class DBHelper { //eslint-disable-line
         return DBHelper.do_base_fetch().then(data =>{
           return idb.transaction('restaurants', 'readwrite', callback).then(transaction => {
             let store = transaction.open_store('restaurants');
-            let promises = data.restaurants.map(restaurant => {
+            let promises = data.map(restaurant => {
               return store.put(restaurant).then(result => {
                 return result;
               });
@@ -76,7 +77,7 @@ class DBHelper { //eslint-disable-line
     //check IDB first
     if(!window.indexedDB){
       return DBHelper.do_base_fetch().then(data => {
-        return data.restaurants;
+        return data;
       }).catch(error =>{
         console.log('DBHelper.do_base_fetch error:',error);
         throw error;

@@ -30,7 +30,7 @@ class Utils{ //eslint-disable-line
     let img = document.createElement('img');
     img.className = 'restaurant-img';
     img.src = smName;
-    img.setAttribute('alt', restaurant.alt);
+    img.setAttribute('alt', restaurant.name);
     picture.append(img);
 
     return picture;

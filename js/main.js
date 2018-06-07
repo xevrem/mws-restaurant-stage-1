@@ -209,7 +209,7 @@ const createRestaurantHTML = (restaurant) => {
   //construct picture element using restaurant info
   let picture = document.createElement('picture');
   picture.className = 'restaurant-img';
-  picture.setAttribute('alt', restaurant.alt);
+  picture.setAttribute('alt', restaurant.name);
   Utils.assemblePictureHtml(picture, restaurant);
   li.append(picture);
 
