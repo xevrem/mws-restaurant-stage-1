@@ -218,7 +218,7 @@ class DBHelper { //eslint-disable-line
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    return (`/img/${restaurant.photograph}`);
+    return (`/img/${restaurant.id}`);
   }
 
   /**

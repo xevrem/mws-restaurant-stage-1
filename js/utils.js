@@ -13,7 +13,7 @@ class Utils{ //eslint-disable-line
   *  </picture>
   */
   static assemblePictureHtml(picture, restaurant){
-    let imageName = DBHelper.imageUrlForRestaurant(restaurant);
+    let imageName = DBHelper.imageUrlForRestaurant(restaurant)+'.jpg';
 
     let lg = document.createElement('source');
     lg.setAttribute('srcset', imageName);
