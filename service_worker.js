@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mws-restaurant-v1'
+const CACHE_NAME = 'mws-restaurant-v1';
 
 const RESOURCES_TO_PRECACHE = [
   'index.html',
@@ -11,6 +11,7 @@ const RESOURCES_TO_PRECACHE = [
   'js/main.js',
   'js/restaurant_info.js',
   'js/utils.js',
+  'js/idb.js'
 ];
 
 const IMAGES_TO_PRECACHE = [
@@ -44,7 +45,7 @@ const IMAGES_TO_PRECACHE = [
   'img/8_md.jpg',
   'img/9_md.jpg',
   'img/10_md.jpg',
-]
+];
 
 //preload the cache with all relevant stuffs
 self.addEventListener('install', event => {
@@ -76,7 +77,7 @@ self.revalidate_fetch = (url) => {
       });
     });
   });
-}
+};
 
 //intercede any fetches and serve from cache in a stale-while-revalidate manner
 self.addEventListener('fetch', event => {

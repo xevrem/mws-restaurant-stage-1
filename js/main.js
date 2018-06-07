@@ -1,15 +1,31 @@
+/* global DBHelper Utils google*/
+
+/* eslint-disable */
 let restaurants,
   neighborhoods,
-  cuisines
-var map
-var markers = []
+  cuisines;
+var map;
+var markers = [];
+/* eslint-enable  */
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
-document.addEventListener('DOMContentLoaded', (event) => {
-  fetchNeighborhoods();
-  fetchCuisines();
+document.addEventListener('DOMContentLoaded', () => {
+  fetch_neighborhoods().then(()=>{
+    fetch_cuisines().then(()=>{
+      update_restaurants().then(() => {
+        console.log('initialization done...');
+      }).catch(error => {
+        console.error('main.update_restaurants error:', error);
+      });
+    }).catch(error => {
+      console.error('main.fetch_cuisines error:', error);
+    });
+  }).catch(error => {
+    console.error('main.fetch_neighborhoods error:', error);
+  });
+
 });
 
 let reloading = false;
@@ -39,47 +55,48 @@ window.addEventListener('load', () => {
   //if the current service worker has changed, reload this page
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloading) return;
-    console.log('reloading...');
+    //console.log('reloading...');
     window.location.reload();
     reloading = true;
   });
 });
 
 //let user know service worker can update
-updateReady = (worker) => {
-  console.log('updateReady called...');
-  worker.postMessage({action: 'SKIP_WAITING'})
-}
+const updateReady = (worker) => {
+  // console.log('updateReady called...');
+  worker.postMessage({action: 'SKIP_WAITING'});
+};
 
 //create an state change tracker for this service worker
-trackInstalling = (worker) => {
-  console.log('trackInstalling called...');
+const trackInstalling = (worker) => {
+  // console.log('trackInstalling called...');
   //if this service worker finished installing, tell it to take over.
   worker.addEventListener('statechange', ()=>{
     if (worker.state === 'installed') {
       updateReady(worker);
     }
   });
-}
+};
+
 
 /**
- * Fetch all neighborhoods and set their HTML.
+ * [fetch_neighborhoods fetch all neighborhoods and set their HTML]
+ * @return {[Promise]} [resolves on successful neighborhood retrieval and rejects on error]
  */
-fetchNeighborhoods = () => {
-  DBHelper.fetchNeighborhoods((error, neighborhoods) => {
-    if (error) { // Got an error
-      console.error(error);
-    } else {
-      self.neighborhoods = neighborhoods;
-      fillNeighborhoodsHTML();
-    }
+const fetch_neighborhoods = () => {
+  return DBHelper.fetch_neighborhoods().then(neighborhoods => {
+    self.neighborhoods = neighborhoods;
+    fillNeighborhoodsHTML();
+  }).catch(error => {
+    console.error('main.newfetchNeighborhoods error:', error);
+    throw error;
   });
-}
+};
 
 /**
  * Set neighborhoods HTML.
  */
-fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
+const fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
   const select = document.getElementById('neighborhoods-select');
   neighborhoods.forEach(neighborhood => {
     const option = document.createElement('option');
@@ -87,26 +104,25 @@ fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
     option.value = neighborhood;
     select.append(option);
   });
-}
+};
 
 /**
  * Fetch all cuisines and set their HTML.
  */
-fetchCuisines = () => {
-  DBHelper.fetchCuisines((error, cuisines) => {
-    if (error) { // Got an error!
-      console.error(error);
-    } else {
-      self.cuisines = cuisines;
-      fillCuisinesHTML();
-    }
+const fetch_cuisines = () =>{
+  return DBHelper.fetch_cuisines().then(cuisines => {
+    self.cuisines = cuisines;
+    fillCuisinesHTML();
+  }).catch(error => {
+    console.error('main.fetch_cuisines error:', error);
+    throw error;
   });
-}
+};
 
 /**
  * Set cuisines HTML.
  */
-fillCuisinesHTML = (cuisines = self.cuisines) => {
+const fillCuisinesHTML = (cuisines = self.cuisines) => {
   const select = document.getElementById('cuisines-select');
 
   cuisines.forEach(cuisine => {
@@ -115,12 +131,13 @@ fillCuisinesHTML = (cuisines = self.cuisines) => {
     option.value = cuisine;
     select.append(option);
   });
-}
+};
 
 /**
  * Initialize Google map, called from HTML.
  */
 window.initMap = () => {
+  console.log('window.initMap called...');
   let loc = {
     lat: 40.722216,
     lng: -73.987501
@@ -130,14 +147,13 @@ window.initMap = () => {
     center: loc,
     scrollwheel: false
   });
-  updateRestaurants();
   google.maps.event.addListenerOnce(self.map, 'idle', Utils.fixIframe);
-}
+};
 
 /**
  * Update page and map for current restaurants.
  */
-updateRestaurants = () => {
+const update_restaurants = () => {
   const cSelect = document.getElementById('cuisines-select');
   const nSelect = document.getElementById('neighborhoods-select');
 
@@ -147,20 +163,19 @@ updateRestaurants = () => {
   const cuisine = cSelect[cIndex].value;
   const neighborhood = nSelect[nIndex].value;
 
-  DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, (error, restaurants) => {
-    if (error) { // Got an error!
-      console.error(error);
-    } else {
-      resetRestaurants(restaurants);
-      fillRestaurantsHTML();
-    }
-  })
-}
+  return DBHelper.fetch_restaurants_by_cuisine_and_neighborhood(cuisine, neighborhood).then(restaurants => {
+    resetRestaurants(restaurants);
+    fillRestaurantsHTML();
+  }).catch(error => {
+    console.error('main.update_restaurants error:', error);
+    throw error;
+  });
+};
 
 /**
  * Clear current restaurants, their HTML and remove their map markers.
  */
-resetRestaurants = (restaurants) => {
+const resetRestaurants = (restaurants) => {
   // Remove all restaurants
   self.restaurants = [];
   const ul = document.getElementById('restaurants-list');
@@ -170,27 +185,27 @@ resetRestaurants = (restaurants) => {
   self.markers.forEach(m => m.setMap(null));
   self.markers = [];
   self.restaurants = restaurants;
-}
+};
 
 /**
  * Create all restaurants HTML and add them to the webpage.
  */
-fillRestaurantsHTML = (restaurants = self.restaurants) => {
+const fillRestaurantsHTML = (restaurants = self.restaurants) => {
   const ul = document.getElementById('restaurants-list');
   restaurants.forEach(restaurant => {
     ul.append(createRestaurantHTML(restaurant));
   });
   addMarkersToMap();
-}
+};
 
 /**
  * Create restaurant HTML.
  */
-createRestaurantHTML = (restaurant) => {
+const createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
   li.className = 'list-item';
-  li.tabIndex = "0";
-  
+  li.tabIndex = '0';
+
   //construct picture element using restaurant info
   let picture = document.createElement('picture');
   picture.className = 'restaurant-img';
@@ -213,21 +228,21 @@ createRestaurantHTML = (restaurant) => {
   const more = document.createElement('a');
   more.innerHTML = 'View Details';
   more.href = DBHelper.urlForRestaurant(restaurant);
-  li.append(more)
+  li.append(more);
 
-  return li
-}
+  return li;
+};
 
 /**
  * Add markers for current restaurants to the map.
  */
-addMarkersToMap = (restaurants = self.restaurants) => {
+const addMarkersToMap = (restaurants = self.restaurants) => {
   restaurants.forEach(restaurant => {
     // Add marker to the map
     const marker = DBHelper.mapMarkerForRestaurant(restaurant, self.map);
     google.maps.event.addListener(marker, 'click', () => {
-      window.location.href = marker.url
+      window.location.href = marker.url;
     });
     self.markers.push(marker);
   });
-}
+};

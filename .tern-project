@@ -4,7 +4,8 @@
     "browser"
   ],
   "loadEagerly": [
-    "js/*.js"
+    "js/*.js",
+    "service_worker.js"
   ],
   "dontLoad": [
     "node_modules/**"

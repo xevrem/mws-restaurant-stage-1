@@ -1,6 +1,9 @@
 /* global DBHelper */
 
-class Utils{
+/**
+ * [Utils offers several utility classes used in several areas of the application]
+ */
+class Utils{ //eslint-disable-line
   /*
   *  Constructs a picture element with the following structure
   *  <picture alt=''>
