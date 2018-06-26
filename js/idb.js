@@ -8,6 +8,7 @@ class IDB{ //eslint-disable-line
     this.dbname = dbname;
     this.version = version;
     this.upgraded = false;
+    this.old_version = -1;
   }
 
   /**
@@ -22,14 +23,14 @@ class IDB{ //eslint-disable-line
     return new Promise(function(resolve, reject){
       //handle successful database opening
       request.onsuccess = function(event){
-        console.log('open_db onsuccess called...');
+        // console.log('open_db onsuccess called...');
         idb.db = event.target.result;
         resolve(idb);
       };
 
       //handle errors on database opening
       request.onerror = function(event){
-        console.log('open_db onerror called...');
+        // console.log('open_db onerror called...');
         let error = event.target.error;
         reject(error);
       };
@@ -37,9 +38,10 @@ class IDB{ //eslint-disable-line
       //if provided, allow for database upgrading
       if(on_upgrade){
         request.onupgradeneeded = function(event){
-          console.log('open_db onupgradeneeded called...');
+          // console.log('open_db onupgradeneeded called...');
           idb.upgraded = true;
           idb.db = event.target.result;
+          idb.old_version = event.oldVersion;
           on_upgrade(idb);
         };
       }
@@ -121,17 +123,17 @@ class Transaction{
   promisify(){
     return new Promise(function(resolve, reject){
       this.transaction.oncomplete = function(){
-        console.log('transaction complete...');
+        //console.log('transaction complete...');
         if(this.callback) this.callback(this.idb);
       }.bind(this);
 
       this.transaction.onerror = function(event){
-        console.log('transaction onerror...');
+        // console.log('transaction onerror...');
         reject(event.target);
       };
 
       this.transaction.onabort = function(event){
-        console.log('transaction onabort...');
+        // console.log('transaction onabort...');
         reject(event.target);
       };
 

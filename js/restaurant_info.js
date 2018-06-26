@@ -47,6 +47,17 @@ const fetch_restaurant_from_url = () => {
   });
 };
 
+const fetch_reviews_by_id = (id) => {
+  return new Promise(function(resolve, reject){
+    return DBHelper.fetch_reviews_by_id(id).then(reviews => {
+      resolve(reviews);
+    }).catch(error => {
+      console.error('restaurant_info.fetch_reviews_by_id error:', error);
+      reject(error);
+    });
+  });
+};
+
 /**
  * Create restaurant HTML and add it to the webpage
  */
@@ -60,7 +71,7 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   //build reactive picture element
   let picture = document.getElementById('restaurant-img');
   picture.className = 'restaurant-img';
-  picture.setAttribute('alt', restaurant.name);
+  picture.setAttribute('alt', restaurant.alt);
   Utils.assemblePictureHtml(picture, restaurant);
 
   const cuisine = document.getElementById('restaurant-cuisine');
@@ -70,8 +81,14 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   if (restaurant.operating_hours) {
     fillRestaurantHoursHTML();
   }
-  // fill reviews
-  fillReviewsHTML();
+  //do restaurant reviews pull
+  fetch_reviews_by_id(restaurant.id).then(reviews => {
+    fillReviewsHTML(reviews);
+  }).catch(error => {
+    console.error('failed fetching reviews, error:', error);
+    // fill reviews
+    fillReviewsHTML();
+  });
 };
 
 /**
@@ -126,7 +143,7 @@ const createReviewHTML = (review) => {
   li.appendChild(name);
 
   const date = document.createElement('p');
-  date.innerHTML = review.date;
+  date.innerHTML = new Date(review.createdAt).toUTCString();
   li.appendChild(date);
 
   const rating = document.createElement('p');
