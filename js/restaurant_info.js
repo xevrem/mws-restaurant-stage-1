@@ -1,9 +1,74 @@
 /* global DBHelper Utils google */
 
 /*eslint-disable*/
-let restaurant;
+var restaurant;
 var map;
+var favorite_restaurant;
 /*eslint-enable*/
+
+document.addEventListener('DOMContentLoaded', () => {
+  if(document.cookie){
+    favorite_restaurant = Utils.parse_cookie().favorite;
+  }
+});
+
+let reloading = false;
+
+window.addEventListener('load', () => {
+  if(!navigator.serviceWorker) return;
+
+  navigator.serviceWorker.getRegistration().then(registration =>  {
+    if(!registration){
+      navigator.serviceWorker.register('/service_worker.js', {scope:'./'}).then(registration=>{
+        // is this a service worker that is waiting to take over?
+        if(registration.waiting){
+          updateReady(registration.waiting);
+          return;
+        }
+
+        //is this a service worker that is installing?
+        if(registration.installing){
+          trackInstalling(registration.installing);
+          return;
+        }
+
+        //has a new service worker appeared?
+        registration.addEventListener('updatefound', () => {
+          trackInstalling(registration.installing);
+        });
+      });
+
+      //if the current service worker has changed, reload this page
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloading) return;
+        //console.log('reloading...');
+        window.location.reload();
+        reloading = true;
+      });
+    }else{
+      console.log('sw registered!');
+    }
+  });
+
+  //
+});
+
+//let user know service worker can update
+const updateReady = (worker) => {
+  // console.log('updateReady called...');
+  worker.postMessage({action: 'SKIP_WAITING'});
+};
+
+//create an state change tracker for this service worker
+const trackInstalling = (worker) => {
+  // console.log('trackInstalling called...');
+  //if this service worker finished installing, tell it to take over.
+  worker.addEventListener('statechange', ()=>{
+    if (worker.state === 'installed') {
+      updateReady(worker);
+    }
+  });
+};
 
 /**
  * Initialize Google map, called from HTML.
@@ -64,6 +129,9 @@ const fetch_reviews_by_id = (id) => {
 const fillRestaurantHTML = (restaurant = self.restaurant) => {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
+  if(favorite_restaurant == restaurant.id) {
+    name.className = 'favorite-restaurant';
+  }
 
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
@@ -81,6 +149,21 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   if (restaurant.operating_hours) {
     fillRestaurantHoursHTML();
   }
+
+  //create favorite button
+  const favorite = document.getElementById('favorite-btn');
+  if(favorite_restaurant == restaurant.id){
+    favorite.className = 'favorite-btn favorite';
+    favorite.title = 'Unfavorite '+restaurant.name;
+    favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
+  }else{
+    favorite.className = 'favorite-btn';
+    favorite.title = 'Favorite '+restaurant.name;
+    favorite.setAttribute('aria-label','favorite '+restaurant.name);
+  }
+  favorite.innerHTML = '★';
+  favorite.onclick = toggle_favorite;
+
   //do restaurant reviews pull
   fetch_reviews_by_id(restaurant.id).then(reviews => {
     fillReviewsHTML(reviews);
@@ -89,6 +172,28 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
     // fill reviews
     fillReviewsHTML();
   });
+};
+
+const toggle_favorite = () => {
+  const name = document.getElementById('restaurant-name');
+  const favorite = document.getElementById('favorite-btn');
+  if(favorite_restaurant != restaurant.id){
+    console.log('favorite...');
+    name.className = 'favorite-restaurant';
+    favorite_restaurant = restaurant.id;
+    favorite.className = 'favorite-btn favorite';
+    favorite.title = 'Unfavorite '+ restaurant.name;
+    favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
+    Utils.set_cookie('favorite', restaurant.id);
+  }else{
+    console.log('unfavorite...');
+    name.className = '';
+    favorite_restaurant = -1;
+    favorite.className = 'favorite-btn';
+    favorite.title = 'Favorite '+restaurant.name;
+    favorite.setAttribute('aria-label','favorite '+restaurant.name);
+    Utils.set_cookie('favorite', -1);
+  }
 };
 
 /**
@@ -138,6 +243,8 @@ const fillReviewsHTML = (reviews = self.restaurant.reviews) => {
  */
 const createReviewHTML = (review) => {
   const li = document.createElement('li');
+  li.tabIndex = '0';
+
   const name = document.createElement('p');
   name.innerHTML = review.name;
   li.appendChild(name);
