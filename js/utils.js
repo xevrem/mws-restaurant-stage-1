@@ -44,4 +44,26 @@ class Utils{ //eslint-disable-line
     //console.log(iframe);
     iframe.setAttribute('title', 'Map of New York Restaurants');
   }
+
+
+  static parse_cookie(){
+    //if we don't have a cookie return
+    if(!document.cookie) return undefined;
+    //get the current cookie string
+    let cookie_string = document.cookie;
+    //split all the key-val pairs
+    let cookies = cookie_string.split(';');
+    let keyvals = {};
+    //for every pair, create an entry in keyvals
+    cookies.forEach(item => {
+      let pair = item.split('=');
+      keyvals[pair[0].trim()] = pair[1];
+    });
+    //return our cookie object
+    return keyvals;
+  }
+
+  static set_cookie(key, value){
+    document.cookie = key+'='+value;
+  }
 }

@@ -6,12 +6,18 @@ let restaurants,
   cuisines;
 var map;
 var markers = [];
+var favorite_restaurant;
 /* eslint-enable  */
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  if(document.cookie){
+    favorite_restaurant = Utils.parse_cookie().favorite;
+  }
+
+
   fetch_neighborhoods().then(()=>{
     fetch_cuisines().then(()=>{
       update_restaurants().then(() => {
@@ -205,6 +211,7 @@ const createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
   li.className = 'list-item';
   li.tabIndex = '0';
+  li.id = 'restaurant-'+restaurant.id;
 
   //construct picture element using restaurant info
   let picture = document.createElement('picture');
@@ -215,6 +222,9 @@ const createRestaurantHTML = (restaurant) => {
 
   const name = document.createElement('h2');
   name.innerHTML = restaurant.name;
+  if(favorite_restaurant == restaurant.id) {
+    name.className = 'favorite-restaurant';
+  }
   li.append(name);
 
   const neighborhood = document.createElement('p');
@@ -228,9 +238,72 @@ const createRestaurantHTML = (restaurant) => {
   const more = document.createElement('a');
   more.innerHTML = 'View Details';
   more.href = DBHelper.urlForRestaurant(restaurant);
-  li.append(more);
+  // li.append(more);
+  more.style = 'display: inline';
+
+  const favorite = document.createElement('button');
+  favorite.style = 'display: inline';
+  if(favorite_restaurant == restaurant.id){
+    favorite.className = 'favorite-btn favorite';
+    favorite.title = 'Unfavorite '+restaurant.name;
+    favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
+  }else{
+    favorite.className = 'favorite-btn';
+    favorite.title = 'Favorite '+restaurant.name;
+    favorite.setAttribute('aria-label','favorite '+restaurant.name);
+  }
+  favorite.innerHTML = '★';
+  favorite.onclick = toggle_favorite.bind(this, name, favorite, restaurant.id);
+  // li.append(favorite);
+
+  const span = document.createElement('span');
+  span.className = 'restaurant-actions';
+  span.append(more);
+  span.append(favorite);
+  li.append(span);
 
   return li;
+};
+
+const toggle_favorite = (name, favorite, id) => {
+  if(document.cookie){
+    let cookies = Utils.parse_cookie();
+    if(cookies['favorite'] == id){
+      toggle_off_favorite(cookies['favorite']);
+      favorite = -1;
+      Utils.set_cookie('favorite', -1);
+    }else{
+      toggle_off_favorite(cookies['favorite']);
+      favorite.className = 'favorite-btn favorite';
+      favorite.title = 'Unfavorite '+name.innerHTML;
+      favorite.setAttribute('aria-label','unfavorite '+name.innerHTML);
+      name.className = 'favorite-restaurant';
+      Utils.set_cookie('favorite', id);
+      favorite = id;
+    }
+  }else{
+    Utils.set_cookie('favorite', id);
+    favorite.className = 'favorite-btn favorite';
+    favorite.title = 'Unfavorite '+name.innerHTML;
+    favorite.setAttribute('aria-label','unfavorite '+name.innerHTML);
+    name.className = 'favorite-restaurant';
+    Utils.set_cookie('favorite', id);
+    favorite = id;
+  }
+};
+
+const toggle_off_favorite = (id) => {
+  if(id <= 0) return;
+  let li = document.getElementById('restaurant-'+id);
+  //reset button classes
+  let button = li.lastElementChild.lastElementChild;
+  let name = li.childNodes[1].innerHTML;
+  button.className = 'favorite-btn';
+  button.title = 'Favorite '+name;
+  button.setAttribute('aria-label','favorite '+name);
+  //clear restaurant name classes
+  li.childNodes[1].className = '';
+
 };
 
 /**

@@ -65,6 +65,32 @@ header h1 a {
   letter-spacing: 10px;
   text-transform: uppercase;
 }
+
+.restaurant-actions{
+	display: block;
+	margin: 15px auto 0px auto;
+}
+
+.favorite-btn{
+	font-family: Arial,sans-serif;
+	font-size: 1.2em;
+	color: white;
+	background-color: #0e3a57;
+	border: none;
+	padding: 10px 20px 10px;
+	height: 41px;
+	vertical-align: middle;
+}
+
+.favorite{
+	background-color: #0e3a57;
+	color: #fba13b;
+}
+
+.favorite-restaurant::after{
+	content: ' ★';
+}
+
 #breadcrumb {
   padding: 15px 0px 15px 15px;
   list-style: none;
@@ -186,8 +212,9 @@ header h1 a {
   display: block;
   font-size: 1.2em;
   font-weight: bold;
-  margin: 15px 0 0;
-  padding: 10px 30px 10px;
+  vertical-align: middle;
+	margin-right: 15px;
+  padding: 10px 20px 10px;
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;

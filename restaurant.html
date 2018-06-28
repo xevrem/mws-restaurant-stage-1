@@ -3,10 +3,15 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#252831">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="favicon.ico">
+
   <!-- Normalize.css for better cross-browser consistency -->
-  <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
+  <!-- <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" /> -->
   <!-- Main CSS file -->
-  <link rel="stylesheet" href="css/styles.css" type="text/css">
+  <link rel="stylesheet" href="css/styles.css">
   <title>Restaurant Info</title>
 </head>
 
@@ -37,16 +42,19 @@
     </section>
     <!-- End map -->
     <!-- Beginning restaurant -->
-    <section id="restaurant-container" tabindex="0" aria-label="Restaruant Information">
-      <h2 id="restaurant-name"></h2>
-      <picture id="restaurant-img"></picture>
-      <p id="restaurant-cuisine"></p>
-      <p id="restaurant-address"></p>
-      <table id="restaurant-hours"></table>
+    <section id="restaurant-container" tabindex="0" aria-label="Restaurant Information">
+      <div tabindex="0">
+        <h2 id="restaurant-name"></h2>
+        <picture id="restaurant-img"></picture>
+        <p id="restaurant-cuisine"></p>
+        <p id="restaurant-address"></p>
+        <table id="restaurant-hours"></table>
+        <button id='favorite-btn'></button>
+      </div>
     </section>
     <!-- end restaurant -->
     <!-- Beginning reviews -->
-    <section id="reviews-container" tabindex="0" aria-label="Restaruant Reviews">
+    <section id="reviews-container" tabindex="0" aria-label="Restaurant Reviews">
       <ul id="reviews-list"></ul>
     </section>
     <!-- End reviews -->
