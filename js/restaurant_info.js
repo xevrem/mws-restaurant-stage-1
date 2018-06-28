@@ -3,13 +3,14 @@
 /*eslint-disable*/
 var restaurant;
 var map;
-var favorite_restaurant;
 /*eslint-enable*/
 
 document.addEventListener('DOMContentLoaded', () => {
-  if(document.cookie){
-    favorite_restaurant = Utils.parse_cookie().favorite;
-  }
+  DBHelper.open_db().then(idb=>{
+    DBHelper.refresh_reviews(idb).then(()=>{
+      console.log('database refreshed...');
+    });
+  });
 });
 
 let reloading = false;
@@ -129,7 +130,7 @@ const fetch_reviews_by_id = (id) => {
 const fillRestaurantHTML = (restaurant = self.restaurant) => {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
-  if(favorite_restaurant == restaurant.id) {
+  if(restaurant.is_favorite === 'true') {
     name.className = 'favorite-restaurant';
   }
 
@@ -152,7 +153,7 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
 
   //create favorite button
   const favorite = document.getElementById('favorite-btn');
-  if(favorite_restaurant == restaurant.id){
+  if(restaurant.is_favorite === 'true'){
     favorite.className = 'favorite-btn favorite';
     favorite.title = 'Unfavorite '+restaurant.name;
     favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
@@ -162,7 +163,7 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
     favorite.setAttribute('aria-label','favorite '+restaurant.name);
   }
   favorite.innerHTML = '★';
-  favorite.onclick = toggle_favorite;
+  favorite.onclick = toggle_favorite.bind(this, restaurant.id);
 
   //do restaurant reviews pull
   fetch_reviews_by_id(restaurant.id).then(reviews => {
@@ -174,26 +175,42 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   });
 };
 
-const toggle_favorite = () => {
+const toggle_favorite = (id) => {
   const name = document.getElementById('restaurant-name');
   const favorite = document.getElementById('favorite-btn');
-  if(favorite_restaurant != restaurant.id){
-    console.log('favorite...');
-    name.className = 'favorite-restaurant';
-    favorite_restaurant = restaurant.id;
-    favorite.className = 'favorite-btn favorite';
-    favorite.title = 'Unfavorite '+ restaurant.name;
-    favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
-    Utils.set_cookie('favorite', restaurant.id);
-  }else{
-    console.log('unfavorite...');
-    name.className = '';
-    favorite_restaurant = -1;
-    favorite.className = 'favorite-btn';
-    favorite.title = 'Favorite '+restaurant.name;
-    favorite.setAttribute('aria-label','favorite '+restaurant.name);
-    Utils.set_cookie('favorite', -1);
-  }
+  DBHelper.fetch_restaurant_by_id(id).then(restaurant => {
+    if(restaurant.is_favorite === 'false'){ //not currently favorite
+      console.log('favorite...');
+      DBHelper.do_toggle_favorite_fetch(restaurant, "true").then(data => {
+        if(data){
+          name.className = 'favorite-restaurant';
+          // favorite_restaurant = restaurant.id;
+          favorite.className = 'favorite-btn favorite';
+          favorite.title = 'Unfavorite '+ restaurant.name;
+          favorite.setAttribute('aria-label','unfavorite '+restaurant.name);
+        }else{
+          console.error('restaraunt_info.toggle_favorite.do_toggle_favorite_fetch received no data...');
+        }
+      });
+    }else{//currently favorite
+      console.log('unfavorite...');
+      DBHelper.do_toggle_favorite_fetch(restaurant, "false").then(data => {
+        if(data){
+          name.className = '';
+          // favorite_restaurant = -1;
+          favorite.className = 'favorite-btn';
+          favorite.title = 'Favorite '+restaurant.name;
+          favorite.setAttribute('aria-label','favorite '+restaurant.name);
+        }else{
+          console.error('restaraunt_info.toggle_favorite.do_toggle_favorite_fetch received no data...');
+        }
+      });
+    }
+  }).catch(error => {
+    console.error('toggle_favorite error:', error);
+  });
+
+
 };
 
 /**

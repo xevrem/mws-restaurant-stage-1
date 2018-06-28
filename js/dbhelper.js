@@ -15,11 +15,11 @@ class DBHelper { //eslint-disable-line
     //const port = 8000 // Change this to your server port
     //return `http://localhost:${port}/data/restaurants.json`;
     //return '/data/restaurants.json';
-    return 'http://localhost:1337/restaurants';
+    return 'http://localhost:1337/restaurants/';
   }
 
   static get DATABASE_REVIEWS_URL(){
-    return 'http://localhost:1337/reviews';
+    return 'http://localhost:1337/reviews/';
   }
 
   // static open_db(callback){
@@ -48,54 +48,12 @@ class DBHelper { //eslint-disable-line
       if(idb.upgraded){
         //we had an update, so load in data
         //setup the base restaurants data fetch promise
-        let base_fetch = DBHelper.do_base_fetch().then(data =>{
-          //issue transaction to populate the data and then call the callback
-          //after the initial data load transaction has completed
-          // return idb.transaction('restaurants', 'readwrite', callback).then(transaction => {
-          return idb.transaction('restaurants', 'readwrite').then(transaction => {
-            let store = transaction.open_store('restaurants');
-            let promises = data.map(restaurant => {
-              return store.put(restaurant).then(result => {
-                return result;
-              });
-            });
-            //await all the puts to settle before returning database.
-            return Promise.all(promises).then(() => {
-              return idb;
-            }).catch(error => {
-              console.error('initial restaurants data load failed...', error);
-            });
-          }).catch(error => {
-            console.error('error during restaurants initialization transaction', error);
-          });
-        }).catch(error => {
-          console.error('error during do_base_fetch on upgrade', error);
-        });
-
+        let restaurants_fetch = DBHelper.refresh_restaurants(idb);
         //setup the base reviews data fetch promise
-        let reviews_fetch = DBHelper.do_base_reviews_fetch().then(data => {
-          return idb.transaction('reviews', 'readwrite').then(transaction => {
-            let store = transaction.open_store('reviews');
-            let promises = data.map(review => {
-              return store.put(review).then(result => {
-                return result;
-              });
-            });
-            //await all the puts to settle before returning database.
-            return Promise.all(promises).then(() => {
-              return idb;
-            }).catch(error => {
-              console.error('initial reviews data load failed...', error);
-            });
-          }).catch(error => {
-            console.error('error during reviews initialization transaction', error);
-          });
-        }).catch(error => {
-          console.error('error during do_base_reviews_fetch on upgrade', error);
-        });
+        let reviews_fetch = DBHelper.refresh_reviews(idb);
 
         //let both data fetches settle before returning
-        return Promise.all([base_fetch, reviews_fetch]).then(() => {
+        return Promise.all([restaurants_fetch, reviews_fetch]).then(() => {
           return idb;
         }).catch(error => {
           console.error('dbhelper.opend_db upgrade error:', error);
@@ -116,7 +74,7 @@ class DBHelper { //eslint-disable-line
    * @return {[Object]} [object representing the json restaurants data]
    */
   static do_base_fetch(){
-    return fetch(DBHelper.DATABASE_URL).then(response => {
+    return fetch(DBHelper.DATABASE_URL, {cache: 'no-cache'}).then(response => {
       return response.json();
     });
   }
@@ -135,24 +93,6 @@ class DBHelper { //eslint-disable-line
         throw error;
       });
     }else{
-      // return DBHelper.open_db(idb => {
-      //   //this is called after the initial data load transaction completes on
-      //   //an upgrade, so we know there is data.
-      //   console.log('dbhelper.fetch_restaurants got db');
-      //   return idb.transaction('restaurants').then(transaction => {
-      //     let store = transaction.open_store('restaurants');
-      //     return store.get_all().then(results => {
-      //       console.log('initial get_all...');
-      //       return results;
-      //     }).catch(error => {
-      //       console.error('get_all error:', error);
-      //       throw error;
-      //     });
-      //   }).catch(error =>{
-      //     console.error('db transaction error:', error);
-      //     throw error;
-      //   });
-      // }).then(idb => {
       return DBHelper.open_db().then(idb => {
         return idb.transaction('restaurants').then(transaction => {
           let store = transaction.open_store('restaurants');
@@ -179,7 +119,7 @@ class DBHelper { //eslint-disable-line
    * @return {[Object]} [object representing the json reviews data]
    */
   static do_base_reviews_fetch(){
-    return fetch(DBHelper.DATABASE_REVIEWS_URL).then(response => {
+    return fetch(DBHelper.DATABASE_REVIEWS_URL, {cache: 'no-cache'}).then(response => {
       return response.json();
     });
   }
@@ -210,6 +150,61 @@ class DBHelper { //eslint-disable-line
         console.error('fetch_reviews open_db error', error);
       });
     }
+  }
+
+  static refresh_restaurants(idb){
+    return DBHelper.do_base_fetch().then(data =>{
+      //issue transaction to populate the data and then call the callback
+      //after the initial data load transaction has completed
+      // return idb.transaction('restaurants', 'readwrite', callback).then(transaction => {
+      return idb.transaction('restaurants', 'readwrite').then(transaction => {
+        let store = transaction.open_store('restaurants');
+        let promises = data.map(restaurant => {
+          return store.put(restaurant).then(result => {
+            return result;
+          });
+        });
+        //await all the puts to settle before returning database.
+        return Promise.all(promises).then(() => {
+          return idb;
+        }).catch(error => {
+          console.error('initial restaurants data load failed...', error);
+        });
+      }).catch(error => {
+        console.error('error during restaurants initialization transaction', error);
+      });
+    }).catch(error => {
+      console.error('error during do_base_fetch on upgrade', error);
+    });
+
+
+  }
+
+  static refresh_reviews(idb){
+    return DBHelper.do_base_reviews_fetch().then(data => {
+      return idb.transaction('reviews', 'readwrite').then(transaction => {
+        let store = transaction.open_store('reviews');
+        let promises = data.map(review => {
+          return store.put(review).then(result => {
+            return result;
+          });
+        });
+        //await all the puts to settle before returning database.
+        return Promise.all(promises).then(() => {
+          return idb;
+        }).catch(error => {
+          console.error('initial reviews data load failed...', error);
+        });
+      }).catch(error => {
+        console.error('error during reviews initialization transaction', error);
+      });
+    }).catch(error => {
+      console.error('error during do_base_reviews_fetch on upgrade', error);
+    });
+  }
+
+  static fetch_restaurant_and_refresh(id){
+
   }
 
   /**
@@ -336,6 +331,39 @@ class DBHelper { //eslint-disable-line
       animation: google.maps.Animation.DROP}
     );
     return marker;
+  }
+
+  static do_toggle_favorite_fetch(restaurant, value){
+    let endpoint = DBHelper.DATABASE_URL+`${restaurant.id}/?is_favorite=${value}`;
+    // console.log('endoint:',endpoint);
+    return fetch(endpoint, {
+      method:'PUT',
+    }).then(response => {
+      if(response.ok) console.log('server record updated...');
+      return response.json().then(data => {
+        return DBHelper.update_restaurant_record(data).then(is_successful => {
+          if(is_successful) console.log('local record updated...');
+          return data;
+        });
+      });
+    }).catch(error => {
+      console.error('DBHelper.do_toggle_favorite_fetch failed... error:', error);
+    });
+  }
+
+  static update_restaurant_record(restaurant){
+    return DBHelper.open_db().then(idb => {
+      return idb.transaction('restaurants', 'readwrite').then(transaction => {
+        let store = transaction.open_store('restaurants');
+        return store.put(restaurant).then(result => {
+          return result;
+        }).catch(error => {
+          console.error('dbhelper.update_restaurant_record.put error:',error);
+        });
+      }).catch(error => {
+        console.error('dbhelper.update_restaurant_record transaction error:', error);
+      });
+    });
   }
 
 }

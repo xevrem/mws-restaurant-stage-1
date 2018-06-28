@@ -82,10 +82,25 @@ self.revalidate_fetch = (url) => {
 self.addEventListener('fetch', event => {
   //skip extension requests
   if(!(event.request.url.indexOf('http') === 0)) return;
+  //dont cache non-GETs
+  if(event.request.method != 'GET') {
+    event.respondWith(fetch(event.request).then(response=>{
+      return response;
+    }));
+    return;
+  }
 
   //normalize the url for local fetches
   let request_url = new URL(event.request.url);
   request_url.search = '';
+
+  //if trying to access the database api, always retrieve the latest
+  if(request_url.port === '1337'){
+    event.respondWith(fetch(event.request).then(response=>{
+      return response;
+    }));
+    return;
+  }
 
   //if requesting from the origin, use request_url
   if(request_url.origin === location.origin){
