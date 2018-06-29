@@ -24,7 +24,7 @@ class DBHelper { //eslint-disable-line
 
   // static open_db(callback){
   static open_db(){
-    let database = new IDB('restaurants', 2);
+    let database = new IDB('restaurants', 3);
 
     return database.open_db(idb => {
       //called on updatedb event to create store and its indicies
@@ -41,7 +41,12 @@ class DBHelper { //eslint-disable-line
           console.log('creating reviews');
           idb.create_store('reviews', {keyPath:'id'}, store => {
             store.create_index('id', 'id', {unique: true});
+            store.create_index('restaurant_id', 'restaurant_id', {unique: false});
           });
+          //falls through
+        case 2://create offline staging store
+          console.log('creating offline staging');
+          idb.create_store('offline', {keyPath:'name'});
       }
     }).then(idb => {
       //we have a ready database, check to see if we just did an upgrade or not
@@ -124,23 +129,35 @@ class DBHelper { //eslint-disable-line
     });
   }
 
-  static fetch_reviews(){
+  static fetch_reviews(id){
     if(!window.indexedDB){
-      DBHelper.do_base_reviews_fetch().then(data => {
+      DBHelper.do_base_restaurant_reviews_fetch(id).then(data => {
         return data;
       }).catch(error => {
-        console.error('DBHelper.do_base_reviews_fetch error:', error);
+        console.error('DBHelper.do_base_restaurant_reviews_fetch error:', error);
       });
     }else{
       return DBHelper.open_db().then(idb => {
         return idb.transaction('reviews').then(transaction => {
           let store = transaction.open_store('reviews');
-          return store.get_all().then(results => {
-            console.log('got all reviews...');
-            return results;
+          // return store.get_all().then(results => {
+          //   console.log('got all reviews...');
+          //   return results;
+          // }).catch(error => {
+          //   console.error('fetch_reviews get_all error:', error);
+          //   throw error;
+          // });
+          let index = store.index('restaurant_id');
+          let data = [];
+          return index.open_cursor(cursor => {
+            // console.log('cursor value:', cursor.value);
+            data.push(cursor.value);
+            cursor.continue();
+          }, IDBKeyRange.only(id)).then(() => {
+            // console.log('final cursor data:', data);
+            return data;
           }).catch(error => {
-            console.error('fetch_reviews get_all error:', error);
-            throw error;
+            console.error('fetch_reviews cursor error:', error);
           });
         }).catch(error =>{
           console.error('fetch_reviews db transaction error:', error);
@@ -203,8 +220,34 @@ class DBHelper { //eslint-disable-line
     });
   }
 
-  static fetch_restaurant_and_refresh(id){
+  static do_base_restaurant_reviews_fetch(id){
+    let endpoint = `http://localhost:1337/reviews/?restaurant_id=${id}`;
+    return fetch(endpoint, {cache:'no-cache'}).then(response =>{
+      return response.json();
+    });
+  }
 
+  static refresh_restaraunt_reviews(idb, id){
+    return DBHelper.do_base_restaurant_reviews_fetch(id).then(data => {
+      // console.log('reviews:',data);
+      return idb.transaction('reviews', 'readwrite').then(transaction => {
+        let store = transaction.open_store('reviews');
+        let promises = data.map(review => {
+          return store.put(review).then(result => {
+            return result;
+          });
+        });
+        //await all the puts to settle before returning database.
+        return Promise.all(promises).then(() => {
+          console.log('reviews refreshed');
+          return idb;
+        }).catch(error => {
+          console.error('restaurant reviews refresh failed:', error);
+        });
+      }).catch(error => {
+        console.error('refresh_restaraunt_reviews transaction error:', error);
+      });
+    });
   }
 
   /**
@@ -295,9 +338,9 @@ class DBHelper { //eslint-disable-line
   }
 
   static fetch_reviews_by_id(id){
-    return DBHelper.fetch_reviews().then(reviews => {
-      const review = reviews.filter(r => r.restaurant_id == id);
-      if (review) return review;
+    return DBHelper.fetch_reviews(id).then(reviews => {
+      // const reviews = data.filter(r => r.restaurant_id == id);
+      if (reviews) return reviews;
       return undefined;
     }).catch(error => {
       console.error('DBHelper.fetch_restaurant_by_id error:', error);
@@ -366,4 +409,100 @@ class DBHelper { //eslint-disable-line
     });
   }
 
+  static update_review_record(review){
+    return DBHelper.open_db().then(idb => {
+      return idb.transaction('reviews', 'readwrite').then(transaction => {
+        let store = transaction.open_store('reviews');
+        return store.put(review).then(result => {
+          return result;
+        }).catch(error => {
+          console.error('dbhelper.update_restaurant_record.put error:',error);
+        });
+      }).catch(error => {
+        console.error('dbhelper.update_restaurant_record transaction error:', error);
+      });
+    });
+  }
+
+  static do_submit_review_fetch(id, data){
+    return fetch(DBHelper.DATABASE_REVIEWS_URL, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).then(response => {
+      console.log('response:',response);
+      return response.json().then(data=>{
+        console.log('data:',data);
+        return DBHelper.update_review_record(data).then(on_success => {
+          console.log('success?', on_success);
+        });
+      });
+    }).catch(error => {
+      console.error('dbhelper.do_submit_review_fetch error...', error);
+    });
+  }
+
+  static do_submit_offline_reviews(){
+    DBHelper.open_db().then(idb => {
+      idb.transaction('offline').then(transaction => {
+        let store = transaction.open_store('offline');
+        store.get_all().then(records => {
+          //if no records, nothing to do
+          if(records.length <= 0) return;
+
+          //create promise array to process
+          let promises = records.map(record => {
+            return DBHelper.do_submit_review_fetch(record.restaurant_id, record);
+          });
+
+          Promise.all(promises).then(values => {
+            console.log('dbhelper.do_submit_offline_reviews completed', values);
+            idb.transaction('offline', 'readwrite').then(transaction => {
+              let clear_store = transaction.open_store('offline');
+              clear_store.clear().then(()=>{
+                console.log('offline successfully cleared...');
+              }).catch(error => {
+                console.error('dbhelper.do_submit_offline_reviews clear error:', error);
+              });
+            }).catch(error => {
+              console.error('dbhelper.do_submit_offline_reviews transaction error:', error);
+            });
+          });
+        }).catch(error => {
+          console.error('dbhelper.do_submit_offline_reviews get_all error:', error);
+        });
+      }).catch(error => {
+        console.error('dbhelper.do_submit_offline_reviews transaction error:', error);
+      });
+    });
+  }
+
+  static store_review_offline(id, form_data){
+    return DBHelper.open_db().then(idb => {
+      return idb.transaction('offline', 'readwrite').then(transaction => {
+        let store = transaction.open_store('offline');
+        return store.put(form_data).then(() => {
+          return;
+        });
+      }).catch(error => {
+        console.error('dbhelper.store_review_offline transaction error:', error);
+      });
+    });
+  }
+
+  static fetch_offline_reviews(id){
+    return DBHelper.open_db().then(idb => {
+      return idb.transaction('offline').then(transaction => {
+        let store = transaction.open_store('offline');
+        return store.get_all().then(reviews => {
+          return reviews.filter(r => r.restaurant_id == id);
+        }).catch(error => {
+          console.error('dbhelper.fetch_offline_reviews get_all error:', error);
+        });
+      }).catch(error => {
+        console.error('dbhelper.fetch_offline_reviews transaction error:', error);
+      });
+    }).catch(error => {
+      console.error('dbhelper.fetch_offline_reviews open_db error:', error);
+    });
+  }
 }

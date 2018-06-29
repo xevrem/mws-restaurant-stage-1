@@ -238,6 +238,25 @@ class ObjectStore{
     return index;
   }
 
+  /**
+   * [delete value with provided key]
+   * @param  {[string]} key [key of record desired to be deleted]
+   * @return {[Promise]}     [Promise that resolves on deletion or rejects on error]
+   */
+  delete(key){
+    let request = new IdbRequest(this.store.delete(key));
+    return request.promisify();
+  }
+
+  /**
+   * [clear removes all records from the store]
+   * @return {[Promise]} [Promise that resolves on clear or rejects on error]
+   */
+  clear(){
+    let request = new IdbRequest(this.store.clear());
+    return request.promisify();
+  }
+
 }
 
 /**
@@ -257,8 +276,13 @@ class Index{
    * @param  {Function} callback [callback called when cursor onsuccess event is fired]
    * @return {[Promise]}            [Promise that resolves when cursor has no more records or rejects on error]
    */
-  cursor(callback){
-    let cursor = new Cursor(this.index.openCursor(), callback);
+  open_cursor(callback, query=undefined){
+    let cursor = new Cursor(this.index.openCursor(query), callback);
+    return cursor.promisify();
+  }
+
+  open_key_cursor(callback, query=undefined){
+    let cursor = new Cursor(this.index.openKeyCursor(query), callback);
     return cursor.promisify();
   }
 }

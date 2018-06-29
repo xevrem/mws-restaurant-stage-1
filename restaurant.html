@@ -49,13 +49,28 @@
         <p id="restaurant-cuisine"></p>
         <p id="restaurant-address"></p>
         <table id="restaurant-hours"></table>
-        <button id='favorite-btn'></button>
+        <button id='favorite-btn' aria-label="make favorite"></button>
       </div>
     </section>
     <!-- end restaurant -->
     <!-- Beginning reviews -->
     <section id="reviews-container" tabindex="0" aria-label="Restaurant Reviews">
-      <ul id="reviews-list"></ul>
+      <h2>Reviews</h2>
+      <ul id="reviews-list" aria-label='review list'></ul>
+      <form tabindex="0" id="review-form" class="review-form" aria-label="restaurnt review form">
+        <h3 class="review-form-heading">Review Restaurant</h3>
+
+        <label class="review-label" for="name">Name:</label>
+        <input type="text" name="name" id="name" class="review-element review-text-input">
+
+        <label class="review-label" for="rating">Rating:</label>
+        <input type="number" name="rating" id="rating" class="review-element review-number-input">
+
+        <label class="review-label" for="comments">Comments:</label>
+        <textarea type="text" name="comments" id="comments" class="review-element review-textarea"></textarea>
+
+        <button name="submission-btn" class="review-element submit-btn" aria-label="submit review">Submit Review</button>
+      </form>
     </section>
     <!-- End reviews -->
   </main>

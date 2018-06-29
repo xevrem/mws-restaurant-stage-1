@@ -7,11 +7,79 @@ var map;
 
 document.addEventListener('DOMContentLoaded', () => {
   DBHelper.open_db().then(idb=>{
-    DBHelper.refresh_reviews(idb).then(()=>{
-      console.log('database refreshed...');
+    let id = getParameterByName('id');
+    DBHelper.refresh_restaraunt_reviews(idb, id).then(()=>{
+      console.log('database reviews refreshed...');
+    }).catch(error => {
+      console.error('DOMContentLoaded reviews refresh error:', error);
     });
   });
+
+  //setup form submission handling
+  let form = document.getElementById('review-form');
+  form.addEventListener('submit', handle_form_submit);
 });
+
+window.addEventListener('online', event => {
+  console.log('online', navigator.onLine);
+  DBHelper.do_submit_offline_reviews();
+});
+
+window.addEventListener('offline', event => {
+  console.log('offline', navigator.onLine);
+});
+
+
+/**
+ * [handle_form_submit handles the onsubmit event from the review form]
+ * @param  {[event]} event [form onsubmit event]
+  */
+const handle_form_submit = event => {
+  //stop page reloading
+  event.preventDefault();
+  //assemble the form data
+  let form_data = {
+    restaurant_id: restaurant.id,
+    name: document.forms['review-form'].name.value,
+    rating: parseInt(document.forms['review-form'].rating.value, 10),
+    comments: document.forms['review-form'].comments.value,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  // console.log('form submitted...', form_data);
+  if(navigator.onLine){
+    //navigator is online, do normal processing
+    do_online_form_processing(form_data);
+  }else{
+    //navigator is offline, do offline processing
+    do_offline_form_processing(form_data);
+  }
+};
+
+const do_online_form_processing = (form_data) => {
+  // attempt submit the data to the server and local db.
+  DBHelper.do_submit_review_fetch(restaurant.id, form_data).then(() => {
+    //immediately add the review to the list and clear the form data
+    add_review_html(form_data);
+    document.forms['review-form'].name.value = '';
+    document.forms['review-form'].rating.value = '';
+    document.forms['review-form'].comments.value = '';
+  }).catch(error => {
+    console.error('do_online_form_processing.do_submit_review_fetch error', error);
+  });
+};
+
+const do_offline_form_processing = (form_data) => {
+  DBHelper.store_review_offline(restaurant.id, form_data).then(() => {
+    //immediately add the review to the list and clear the form data
+    add_review_html(form_data);
+    document.forms['review-form'].name.value = '';
+    document.forms['review-form'].rating.value = '';
+    document.forms['review-form'].comments.value = '';
+  }).catch(error => {
+    console.error('do_offline_form_processing.do_submit_review_fetch error', error);
+  });
+};
 
 let reloading = false;
 
@@ -168,6 +236,16 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   //do restaurant reviews pull
   fetch_reviews_by_id(restaurant.id).then(reviews => {
     fillReviewsHTML(reviews);
+    //if offline, fetch and build any stored offline reviews
+    if(!navigator.onLine){
+      DBHelper.fetch_offline_reviews(restaurant.id).then(offline_reviews => {
+        offline_reviews.forEach(offline_review => {
+          add_review_html(offline_review);
+        });
+      }).catch(error => {
+        console.error('fillRestaurantHTML fetch_offline_reviews error:',error);
+      });
+    }
   }).catch(error => {
     console.error('failed fetching reviews, error:', error);
     // fill reviews
@@ -238,9 +316,9 @@ const fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hour
  */
 const fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h2');
-  title.innerHTML = 'Reviews';
-  container.appendChild(title);
+  // const title = document.createElement('h2');
+  // title.innerHTML = 'Reviews';
+  // container.appendChild(title);
 
   if (!reviews) {
     const noReviews = document.createElement('p');
@@ -249,10 +327,23 @@ const fillReviewsHTML = (reviews = self.restaurant.reviews) => {
     return;
   }
   const ul = document.getElementById('reviews-list');
-  reviews.forEach(review => {
-    ul.appendChild(createReviewHTML(review));
-  });
+  try{
+    reviews.forEach(review => {
+      ul.appendChild(createReviewHTML(review));
+    });
+  }catch(error){
+    console.log('createReviewHTML error:', error);
+  }
+
   container.appendChild(ul);
+};
+
+const add_review_html = (review) => {
+  //dont attempt to add nothing
+  if(!review) return;
+
+  const ul = document.getElementById('reviews-list');
+  ul.append(createReviewHTML(review));
 };
 
 /**
