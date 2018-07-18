@@ -12,10 +12,6 @@ var markers = [];
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', () => {
-  if(document.cookie){
-    favorite_restaurant = Utils.parse_cookie().favorite;
-  }
-
 
   fetch_neighborhoods().then(()=>{
     fetch_cuisines().then(()=>{
