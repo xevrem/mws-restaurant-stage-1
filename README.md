@@ -16,6 +16,6 @@ This project utilizes:
 
 1. In this folder, start up a simple HTTP server to serve up the site files on your local computer. Python has some simple tools to do this, and you don't even need to know Python. For most people, it's already installed on your computer.
 
-In a terminal, you can run the website directly with python's `SimpleHTTPServer` via `python3 -m http.server 8000` or node's `http-server` via 'http-server -p 8000 -i'.
+In a terminal, you can run the website directly with python's `SimpleHTTPServer` via `python3 -m http.server 8000` or node's `http-server` via `http-server -p 8000 -i`.
 
 2. With your server running, visit the site: `http://localhost:8000`
