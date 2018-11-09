@@ -84,10 +84,10 @@ self.addEventListener('fetch', event => {
   if(!(event.request.url.indexOf('http') === 0)) return;
   //dont cache non-GETs
   if(event.request.method != 'GET') {
-    event.respondWith(fetch(event.request).then(response=>{
+    return event.respondWith(fetch(event.request).then(response=>{
       return response;
     }));
-    return;
+    // return;
   }
 
   //normalize the url for local fetches
@@ -96,17 +96,17 @@ self.addEventListener('fetch', event => {
 
   //if trying to access the database api, always retrieve the latest
   if(request_url.port === '1337'){
-    event.respondWith(fetch(event.request).then(response=>{
+    return event.respondWith(fetch(event.request).then(response=>{
       return response;
     }));
-    return;
+    // return;
   }
 
   //if requesting from the origin, use request_url
   if(request_url.origin === location.origin){
     //if request is for 'root' page, serve the index
     if (request_url.pathname === '/') {
-      event.respondWith(caches.open(CACHE_NAME).then(cache => {
+      return event.respondWith(caches.open(CACHE_NAME).then(cache => {
         return cache.match('index.html').then(response => {
           //if valid response, use it, but revalidate too
           if(response){
@@ -118,11 +118,11 @@ self.addEventListener('fetch', event => {
           return revalidate_fetch('index.html');
         });
       }));
-      return;
+      // return;
     }
 
     //serve local resources with normalized URL
-    event.respondWith(caches.match(request_url).then(response => {
+    return event.respondWith(caches.match(request_url).then(response => {
       //if valid response, use it, but revalidate too
       if(response){
         //ensure sw left alive long enough to re-cache
@@ -132,11 +132,11 @@ self.addEventListener('fetch', event => {
       //do a fetch & cache
       return revalidate_fetch(request_url);
     }));
-    return;
+    // return;
   }
 
   //for network fetches
-  event.respondWith(caches.match(event.request).then(response => {
+  return event.respondWith(caches.match(event.request).then(response => {
     //if valid response, use it, but revalidate too
     if(response){
       //ensure sw left alive long enough to re-cache

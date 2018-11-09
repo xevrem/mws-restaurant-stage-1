@@ -39,24 +39,29 @@ let reloading = false;
 window.addEventListener('load', () => {
   if(!navigator.serviceWorker) return;
 
-  navigator.serviceWorker.register('/service_worker.js').then(registration=>{
-    // is this a service worker that is waiting to take over?
-    if(registration.waiting){
-      updateReady(registration.waiting);
-      return;
-    }
+  if(navigator.serviceWorker.controller){
+    let url = navigator.serviceWorker.controller.scriptURL;
+    console.log('serviceWorker.controller', url);
+  }else{
+    navigator.serviceWorker.register('/service_worker.js').then(registration=>{
+      // is this a service worker that is waiting to take over?
+      if(registration.waiting){
+        updateReady(registration.waiting);
+        return;
+      }
 
-    //is this a service worker that is installing?
-    if(registration.installing){
-      trackInstalling(registration.installing);
-      return;
-    }
+      //is this a service worker that is installing?
+      if(registration.installing){
+        trackInstalling(registration.installing);
+        return;
+      }
 
-    //has a new service worker appeared?
-    registration.addEventListener('updatefound', () => {
-      trackInstalling(registration.installing);
+      //has a new service worker appeared?
+      registration.addEventListener('updatefound', () => {
+        trackInstalling(registration.installing);
+      });
     });
-  });
+  }
 
   //if the current service worker has changed, reload this page
   navigator.serviceWorker.addEventListener('controllerchange', () => {
